@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 5px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            font-size: 36px;
+            text-align: center;
+            vertical-align: middle;
+            cursor: pointer;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tic Tac Toe</h1>
+    <p>Current player: <span id="current-player">{{ current_player }}</span></p>
+    <div id="board">
+        {% for cell in board %}
+            <div class="cell" data-index="{{ loop.index0 }}" onclick="makeMove({{ loop.index0 }})">{{ cell }}</div>
+        {% endfor %}
+    </div>
+    <script>
+function makeMove(position) {
+    fetch('/make_move', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `position=${position}`,
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Display the player's move
+        updateBoard(data.board);
+        document.getElementById('current-player').innerText = data.current_player;
+
+        // Check for win or draw after a short delay to ensure the board is updated
+        setTimeout(() => {
+            if (data.status === 'win') {
+                alert(`Player ${data.winner} wins!`);
+                resetBoard();
+            } else if (data.status === 'draw') {
+                alert('It\'s a draw!');
+                resetBoard();
+            } else if (data.status === 'error') {
+                alert(`Error: ${data.message}`);
+            }
+        }, 100);
+    });
+}
+
+
+        function updateBoard(board) {
+            document.querySelectorAll('.cell').forEach((cell, index) => {
+                cell.innerText = board[index];
+            });
+        }
+
+        function resetBoard() {
+            fetch('/reset_board')
+            .then(() => {
+                window.location.reload();
+            });
+        }
+    </script>
+</body>
+</html>
+
+
